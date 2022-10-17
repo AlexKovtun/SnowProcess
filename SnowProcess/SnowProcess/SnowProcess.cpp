@@ -16,6 +16,7 @@ Environment:
 
 #include <fltKernel.h>
 #include <dontuse.h>
+#include <ntddk.h>
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
@@ -33,6 +34,9 @@ ULONG gTraceFlags = 0;
     (FlagOn(gTraceFlags,(_dbgLevel)) ?              \
         DbgPrint _string :                          \
         ((int)0))
+
+
+
 
 /*************************************************************************
     Prototypes
@@ -521,6 +525,22 @@ Return Value:
 /*************************************************************************
     MiniFilter initialization and unload routines.
 *************************************************************************/
+void InitDispathRoutines(PDRIVER_OBJECT DriverObject)
+{
+    DriverObject->DriverUnload = SnowProcessUnloadDriver;
+    DriverObject->MajorFunction[IRP_MJ_CREATE] =
+    DriverObject->MajorFunction[IRP_MJ_CLOSE] = DelProtectCreateClose;
+    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DelProtectDeviceControl;
+}
+
+
+void SnowProcessUnloadDriver(PDRIVER_OBJECT DriverObject)
+{
+    PsSetCreateProcessNotifyRoutine(OnProcessNotify, true);
+    UNICODE_STRING symbolicLink = RTL_CONSTANT_STRING(L"\\??\\SnowProcess");
+    IoDeleteSymbolicLink(&symbolicLink);
+    IoDeleteDevice(DriverObject->DeviceObject);
+}
 
 NTSTATUS
 DriverEntry (
@@ -548,35 +568,67 @@ Return Value:
 
 --*/
 {
-    NTSTATUS status;
+    UNREFERENCED_PARAMETER(RegistryPath);
+    PT_DBG_PRINT(PTDBG_TRACE_ROUTINES,
+        ("SnowProcess!DriverEntry: Entered\n"));
 
-    UNREFERENCED_PARAMETER( RegistryPath );
+    NTSTATUS status = true;
+    PDEVICE_OBJECT DeviceObject = NULL;
+    UNICODE_STRING devName = RTL_CONSTANT_STRING(L"\\device\\SnowProcess");
+    UNICODE_STRING symbolName = RTL_CONSTANT_STRING(L"\\??\\SnowProcess");
 
-    PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("SnowProcess!DriverEntry: Entered\n") );
-
-    //
-    //  Register with FltMgr to tell it our callback routines
-    //
-
-    status = FltRegisterFilter( DriverObject,
-                                &FilterRegistration,
-                                &gFilterHandle );
-
-    FLT_ASSERT( NT_SUCCESS( status ) );
-
-    if (NT_SUCCESS( status )) {
-
-        //
-        //  Start filtering i/o
-        //
-
-        status = FltStartFiltering( gFilterHandle );
-
-        if (!NT_SUCCESS( status )) {
-
-            FltUnregisterFilter( gFilterHandle );
+    auto symbolicLinkCreated = false;
+    do
+    {
+        //init device object
+        status = IoCreateDevice(DriverObject, 0, &devName,
+            FILE_DEVICE_UNKNOWN, 0, FALSE, &DeviceObject);
+        if (!NT_SUCCESS(status))
+        {
+            DbgPrint("Failed to create Device Object\n");
+            break;
         }
+
+        DeviceObject->Flags |= DO_DIRECT_IO;
+
+        //init symbolic link
+        status = IoCreateSymbolicLink(&symbolName, &devName);
+        if (!NT_SUCCESS(status))
+        {
+            DbgPrint("Failed to create Symbolic Link\n");
+            break;
+        }
+        symbolicLinkCreated = true;
+
+        status = PsSetCreateProcessNotifyRoutineEx(OnProcessNotify, false);
+        if (!NT_SUCCESS(status))
+        {
+            DbgPrint("Failed to register the Driver to callback routine of process Craetion\n");
+            break;
+        }
+
+        //  Register with FltMgr to tell it our callback routines
+        status = FltRegisterFilter(DriverObject, &FilterRegistration,
+                                                        &gFilterHandle);
+        FLT_ASSERT(NT_SUCCESS(status));
+        if (!NT_SUCCESS(status)) 
+            break;
+
+        InitDispathRoutines(DriverObject); //init dispath rotuines for the driver create/close/iodevice
+
+        status = FltStartFiltering(gFilterHandle); //  Start filtering i/o
+
+    } while (false);
+
+    //if something got wrong free the resources
+    if (!NT_SUCCESS(status))
+    {
+        if(gFilterHandle)
+            FltUnregisterFilter(gFilterHandle);
+        if (symbolicLinkCreated)
+            IoDeleteSymbolicLink(&symbolName);
+        if (DeviceObject)
+            IoDeleteDevice(DeviceObject);
     }
 
     return status;
