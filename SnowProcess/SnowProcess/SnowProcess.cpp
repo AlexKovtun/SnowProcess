@@ -17,6 +17,7 @@ Environment:
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <ntddk.h>
+#include "SnowProcess.h"
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
@@ -528,18 +529,51 @@ Return Value:
 void InitDispathRoutines(PDRIVER_OBJECT DriverObject)
 {
     DriverObject->DriverUnload = SnowProcessUnloadDriver;
-    DriverObject->MajorFunction[IRP_MJ_CREATE] =
-    DriverObject->MajorFunction[IRP_MJ_CLOSE] = DelProtectCreateClose;
-    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DelProtectDeviceControl;
+    DriverObject->MajorFunction[IRP_MJ_CREATE] = SnowProcessCreateClose;
+    DriverObject->MajorFunction[IRP_MJ_CLOSE] = SnowProcessCreateClose;
+    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = SnowProcessDeviceControl;
 }
 
 
 void SnowProcessUnloadDriver(PDRIVER_OBJECT DriverObject)
 {
-    PsSetCreateProcessNotifyRoutine(OnProcessNotify, true);
+    PsSetCreateProcessNotifyRoutineEx(OnProcessNotify, true);
     UNICODE_STRING symbolicLink = RTL_CONSTANT_STRING(L"\\??\\SnowProcess");
     IoDeleteSymbolicLink(&symbolicLink);
     IoDeleteDevice(DriverObject->DeviceObject);
+}
+
+void OnProcessNotify(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
+{
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(ProcessId);
+
+    if (CreateInfo)
+    {
+        DbgPrint("Hi There!\n");
+        //process create
+        //DbgPrint("PID Create: %d\nProcess Create: %s\n", 
+          //  HandleToULong(ProcessId), CreateInfo->ImageFileName->Buffer);
+    }
+    else
+    {
+        DbgPrint("Bye There!\n");
+        //process exit
+        //DbgPrint("PID Exit: %d\nProcess Exit: %s\n",
+          //  HandleToULong(ProcessId), CreateInfo->ImageFileName->Buffer);
+    }
+}
+
+NTSTATUS SnowProcessCreateClose(PDEVICE_OBJECT, PIRP Irp)
+{
+    UNREFERENCED_PARAMETER(Irp);
+    return NTSTATUS();
+}
+
+NTSTATUS SnowProcessDeviceControl(PDEVICE_OBJECT, PIRP Irp)
+{
+    UNREFERENCED_PARAMETER(Irp);
+    return NTSTATUS();
 }
 
 NTSTATUS
