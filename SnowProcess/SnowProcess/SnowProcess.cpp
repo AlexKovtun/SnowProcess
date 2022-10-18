@@ -14,6 +14,7 @@ Environment:
 
 --*/
 
+///check
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <ntddk.h>
