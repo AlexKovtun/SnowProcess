@@ -36,6 +36,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SnowProcess.rc" />
+    <ClCompile Include="DispathRoutines.cpp" />
+    <ClCompile Include="FastMutex.cpp" />
+    <ClCompile Include="ListOperations.cpp" />
     <ClCompile Include="SnowProcess.cpp" />
     <Inf Include="SnowProcess.inf" />
   </ItemGroup>
@@ -195,6 +198,9 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AutoLock.h" />
+    <ClInclude Include="FastMutex.h" />
+    <ClInclude Include="ListOperations.h" />
     <ClInclude Include="SnowProcess.h" />
     <ClInclude Include="SnowProcessCommon.h" />
   </ItemGroup>

@@ -16,5 +16,31 @@
 							0x802, METHOD_NEITHER, FILE_ANY_ACCESS)
 
 #pragma once
+#include "FastMutex.h"
 
+
+const int MaxSizeImageName = 300 + 1;
+struct AllowedProcess
+{
+	WCHAR ImageFileName[MaxSizeImageName];
+	int length_;
+};
+
+
+struct SnowProcesses
+{
+	LIST_ENTRY head_;
+	int numOfElements_;
+	FastMutex mutex_;
+};
+
+//global 
+extern SnowProcesses WhiteProcesses;
+
+template <typename T>
+struct Item
+{
+	LIST_ENTRY Entry;
+	T data_;
+};
 

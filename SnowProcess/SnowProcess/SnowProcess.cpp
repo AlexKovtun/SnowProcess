@@ -14,11 +14,13 @@ Environment:
 
 --*/
 
-///check
 #include <fltKernel.h>
 #include <dontuse.h>
 #include <ntddk.h>
+
+#include "AutoLock.h"
 #include "SnowProcess.h"
+#include "ListOperations.h"
 
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
@@ -38,8 +40,7 @@ ULONG gTraceFlags = 0;
         ((int)0))
 
 
-
-
+SnowProcesses WhiteProcesses;
 /*************************************************************************
     Prototypes
 *************************************************************************/
@@ -542,6 +543,7 @@ void SnowProcessUnloadDriver(PDRIVER_OBJECT DriverObject)
     UNICODE_STRING symbolicLink = RTL_CONSTANT_STRING(L"\\??\\SnowProcess");
     IoDeleteSymbolicLink(&symbolicLink);
     IoDeleteDevice(DriverObject->DeviceObject);
+    ClearAllProcesses();
 }
 
 void OnProcessNotify(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
@@ -551,31 +553,24 @@ void OnProcessNotify(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO
 
     if (CreateInfo)
     {
-        DbgPrint("Hi There!\n");
-        //process create
-        //DbgPrint("PID Create: %d\nProcess Create: %s\n", 
-          //  HandleToULong(ProcessId), CreateInfo->ImageFileName->Buffer);
-    }
-    else
-    {
-        DbgPrint("Bye There!\n");
-        //process exit
-        //DbgPrint("PID Exit: %d\nProcess Exit: %s\n",
-          //  HandleToULong(ProcessId), CreateInfo->ImageFileName->Buffer);
+        DbgPrint("Create Process\n");
+        
+        if (!IsAllowedProcess(CreateInfo->ImageFileName))
+            CreateInfo->CreationStatus = STATUS_ACCESS_DENIED; //fail the process 
     }
 }
 
-NTSTATUS SnowProcessCreateClose(PDEVICE_OBJECT, PIRP Irp)
+bool IsAllowedProcess(PCUNICODE_STRING ImageName)
 {
-    UNREFERENCED_PARAMETER(Irp);
-    return NTSTATUS();
+    UNREFERENCED_PARAMETER(ImageName);
+    //TODO: if inside the linked list allowed,otherwise return false
+    UNICODE_STRING str = RTL_CONSTANT_STRING(L"bob");
+    //if (RtlEqualUnicodeString(ImageName, str)
+      //  return true;
+    return false;
 }
 
-NTSTATUS SnowProcessDeviceControl(PDEVICE_OBJECT, PIRP Irp)
-{
-    UNREFERENCED_PARAMETER(Irp);
-    return NTSTATUS();
-}
+
 
 NTSTATUS
 DriverEntry (
@@ -607,6 +602,8 @@ Return Value:
     PT_DBG_PRINT(PTDBG_TRACE_ROUTINES,
         ("SnowProcess!DriverEntry: Entered\n"));
 
+    //InitWhiteListProcesses();
+
     NTSTATUS status = true;
     PDEVICE_OBJECT DeviceObject = NULL;
     UNICODE_STRING devName = RTL_CONSTANT_STRING(L"\\device\\SnowProcess");
@@ -624,7 +621,8 @@ Return Value:
             break;
         }
 
-        DeviceObject->Flags |= DO_DIRECT_IO;
+        //TODO:figure out if need direct io for this project
+        //DeviceObject->Flags |= DO_DIRECT_IO;
 
         //init symbolic link
         status = IoCreateSymbolicLink(&symbolName, &devName);
