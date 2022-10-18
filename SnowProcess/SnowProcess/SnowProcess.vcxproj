@@ -36,7 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SnowProcess.rc" />
-    <ClCompile Include="SnowProcess.c" />
+    <ClCompile Include="SnowProcess.cpp" />
     <Inf Include="SnowProcess.inf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -193,6 +193,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SnowProcess.h" />
+    <ClInclude Include="SnowProcessCommon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
