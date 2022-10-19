@@ -9,17 +9,16 @@
 // and IoBuildDeviceIoControlRequest. The driver transfers data out of, and then into, this buffer.
 #define SNOW_PROCESS_DEVICE 0x8000
 #define IOCTL_REQUEST_TYPE_ADD CTL_CODE(SNOW_PROCESS_DEVICE, \
-							0x800, METHOD_BUFFERED, FILE_ANY_ACCESS)
+							0x800, METHOD_NEITHER, FILE_ANY_ACCESS)
 #define IOCTL_REQUEST_TYPE_REMOVE CTL_CODE(SNOW_PROCESS_DEVICE, \
-							0x801, METHOD_BUFFERED, FILE_ANY_ACCESS)
+							0x801, METHOD_NEITHER, FILE_ANY_ACCESS)
 #define IOCTL_REQUEST_TYPE_CLEAR_ALL CTL_CODE(SNOW_PROCESS_DEVICE, \
 							0x802, METHOD_NEITHER, FILE_ANY_ACCESS)
 
 #pragma once
-#include "FastMutex.h"
 
 
-const int MaxSizeImageName = 300 + 1;
+const int MaxSizeImageName = 300 ;
 struct AllowedProcess
 {
 	WCHAR ImageFileName[MaxSizeImageName];
@@ -27,20 +26,5 @@ struct AllowedProcess
 };
 
 
-struct SnowProcesses
-{
-	LIST_ENTRY head_;
-	int numOfElements_;
-	FastMutex mutex_;
-};
 
-//global 
-extern SnowProcesses WhiteProcesses;
-
-template <typename T>
-struct Item
-{
-	LIST_ENTRY Entry;
-	T data_;
-};
 

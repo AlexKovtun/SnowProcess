@@ -1,5 +1,5 @@
 #include "ListOperations.h"
-#include "SnowProcessCommon.h"
+#include "SnowProcess.h"
 #include "AutoLock.h"
 #include "FastMutex.h"
 
@@ -19,6 +19,7 @@ void AddAllowedProcess(LIST_ENTRY* entry)
 
 void ClearAllProcesses()
 {
+    AutoLock<FastMutex> lock(WhiteProcesses.mutex_); // is it needed?
     while (!IsListEmpty(&WhiteProcesses.head_))
     {
         auto prevHead = RemoveHeadList(&WhiteProcesses.head_);
@@ -35,4 +36,21 @@ void ClearAllProcesses()
 void DeleteProcess()
 {
     UNREFERENCED_PARAMETER(WhiteProcesses);
+}
+
+LIST_ENTRY *FindObject()
+{
+    auto *iter = &WhiteProcesses.head_;
+    auto data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
+    DbgPrint("%ws\n", data->data_.ImageFileName);
+    iter = iter->Blink;
+    data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
+    DbgPrint("%ws\n", data->data_.ImageFileName);
+    while (&WhiteProcesses.head_ != &(*iter))
+    {
+        data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
+        DbgPrint("%ws\n", data->data_.ImageFileName);
+        iter = iter->Blink;
+    }
+    return nullptr;
 }

@@ -7,3 +7,4 @@ void InitWhiteListProcesses();
 void AddAllowedProcess(LIST_ENTRY* entry);
 void ClearAllProcesses();
 void DeleteProcess();
+LIST_ENTRY *FindObject();

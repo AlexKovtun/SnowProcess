@@ -565,9 +565,16 @@ bool IsAllowedProcess(PCUNICODE_STRING ImageName)
     UNREFERENCED_PARAMETER(ImageName);
     //TODO: if inside the linked list allowed,otherwise return false
     UNICODE_STRING str = RTL_CONSTANT_STRING(L"bob");
+    auto isFound = FindObject();
+    if(!isFound)
+    {
+        DbgPrint("something working\n");
+        return true;
+    }
     //if (RtlEqualUnicodeString(ImageName, str)
       //  return true;
-    return false;
+    
+    return true;
 }
 
 
@@ -602,7 +609,7 @@ Return Value:
     PT_DBG_PRINT(PTDBG_TRACE_ROUTINES,
         ("SnowProcess!DriverEntry: Entered\n"));
 
-    //InitWhiteListProcesses();
+    InitWhiteListProcesses();
 
     NTSTATUS status = true;
     PDEVICE_OBJECT DeviceObject = NULL;
