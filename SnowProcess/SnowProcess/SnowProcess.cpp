@@ -41,6 +41,7 @@ ULONG gTraceFlags = 0;
 
 
 SnowProcesses WhiteProcesses;
+
 /*************************************************************************
     Prototypes
 *************************************************************************/
@@ -92,6 +93,13 @@ SnowProcessPreOperation (
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
     );
 
+FLT_PREOP_CALLBACK_STATUS
+SnowProcessPreSetInformation(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Flt_CompletionContext_Outptr_ PVOID* CompletionContext
+);
+
 VOID
 SnowProcessOperationStatusCallback (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -140,205 +148,8 @@ EXTERN_C_END
 //
 
 CONST FLT_OPERATION_REGISTRATION Callbacks[] = {
-
-#if 0 // TODO - List all of the requests to filter.
-    { IRP_MJ_CREATE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_CREATE_NAMED_PIPE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_CLOSE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_READ,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_WRITE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_QUERY_INFORMATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SET_INFORMATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_QUERY_EA,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SET_EA,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_FLUSH_BUFFERS,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_QUERY_VOLUME_INFORMATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SET_VOLUME_INFORMATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_DIRECTORY_CONTROL,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_FILE_SYSTEM_CONTROL,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_DEVICE_CONTROL,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_INTERNAL_DEVICE_CONTROL,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SHUTDOWN,
-      0,
-      SnowProcessPreOperationNoPostOperation,
-      NULL },                               //post operations not supported
-
-    { IRP_MJ_LOCK_CONTROL,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_CLEANUP,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_CREATE_MAILSLOT,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_QUERY_SECURITY,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SET_SECURITY,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_QUERY_QUOTA,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_SET_QUOTA,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_PNP,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_ACQUIRE_FOR_MOD_WRITE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_RELEASE_FOR_MOD_WRITE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_ACQUIRE_FOR_CC_FLUSH,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_RELEASE_FOR_CC_FLUSH,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_NETWORK_QUERY_OPEN,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_MDL_READ,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_MDL_READ_COMPLETE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_PREPARE_MDL_WRITE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_MDL_WRITE_COMPLETE,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_VOLUME_MOUNT,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-    { IRP_MJ_VOLUME_DISMOUNT,
-      0,
-      SnowProcessPreOperation,
-      SnowProcessPostOperation },
-
-#endif // TODO
-
+    { IRP_MJ_CREATE, 0, SnowProcessPreOperation, nullptr},
+    { IRP_MJ_SET_INFORMATION, 0, SnowProcessPreSetInformation, nullptr },
     { IRP_MJ_OPERATION_END }
 };
 
@@ -528,6 +339,42 @@ Return Value:
 /*************************************************************************
     MiniFilter initialization and unload routines.
 *************************************************************************/
+bool isDeleteAllowed(_In_ PFLT_CALLBACK_DATA data)
+{
+    DbgPrint("We Trying To delete :)\n");
+    PFLT_FILE_NAME_INFORMATION nameInfo = nullptr;
+    bool allow = true;
+    NTSTATUS status;
+    do
+    {
+        status = FltGetFileNameInformation(data,
+            FLT_FILE_NAME_QUERY_DEFAULT | FLT_FILE_NAME_NORMALIZED, &nameInfo);
+        if (!NT_SUCCESS(status))
+            break;
+
+        status = FltParseFileNameInformation(nameInfo);
+        if (!NT_SUCCESS(status))
+            break;
+
+        UNICODE_STRING fullPath;
+        fullPath.Length = nameInfo->Volume.Length + nameInfo->ParentDir.Length;
+        fullPath.Buffer = nameInfo->ParentDir.Buffer;
+
+        DbgPrint("%ws\n", fullPath.Buffer);
+        UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\x64");
+        DbgPrint("%d\n", RtlPrefixUnicodeString(&path, &fullPath, false));
+
+        if (RtlPrefixUnicodeString(&path, &fullPath, false))
+            allow = false;
+
+    } while (false);
+    if (nameInfo)
+        FltReleaseFileNameInformation(nameInfo);
+    return allow;
+}
+
+
+
 void InitDispathRoutines(PDRIVER_OBJECT DriverObject)
 {
     DriverObject->DriverUnload = SnowProcessUnloadDriver;
@@ -605,9 +452,11 @@ Return Value:
 
 --*/
 {
-    UNREFERENCED_PARAMETER(RegistryPath);
     PT_DBG_PRINT(PTDBG_TRACE_ROUTINES,
         ("SnowProcess!DriverEntry: Entered\n"));
+
+    if(RegistryPath->Buffer)
+        DbgPrint("%ws\n", RegistryPath->Buffer);
 
     InitWhiteListProcesses();
 
@@ -712,9 +561,10 @@ Return Value:
 
 /*************************************************************************
     MiniFilter callback routines.
+    MiniFilter callback routines.
 *************************************************************************/
-FLT_PREOP_CALLBACK_STATUS
-SnowProcessPreOperation (
+FLT_PREOP_CALLBACK_STATUS SnowProcessPreOperation
+     (
     _Inout_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
     _Flt_CompletionContext_Outptr_ PVOID *CompletionContext
@@ -744,43 +594,57 @@ Return Value:
 
 --*/
 {
-    NTSTATUS status;
-
-    UNREFERENCED_PARAMETER( FltObjects );
-    UNREFERENCED_PARAMETER( CompletionContext );
-
-    PT_DBG_PRINT( PTDBG_TRACE_ROUTINES,
-                  ("SnowProcess!SnowProcessPreOperation: Entered\n") );
-
-    //
-    //  See if this is an operation we would like the operation status
-    //  for.  If so request it.
-    //
-    //  NOTE: most filters do NOT need to do this.  You only need to make
-    //        this call if, for example, you need to know if the oplock was
-    //        actually granted.
-    //
-
-    if (SnowProcessDoRequestOperationStatus( Data )) {
-
-        status = FltRequestOperationStatusCallback( Data,
-                                                    SnowProcessOperationStatusCallback,
-                                                    (PVOID)(++OperationStatusCtx) );
-        if (!NT_SUCCESS(status)) {
-
-            PT_DBG_PRINT( PTDBG_TRACE_OPERATION_STATUS,
-                          ("SnowProcess!SnowProcessPreOperation: FltRequestOperationStatusCallback Failed, status=%08x\n",
-                           status) );
+    UNREFERENCED_PARAMETER(CompletionContext);
+    
+    if (Data->RequestorMode == KernelMode)
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+    
+    auto& params = Data->Iopb->Parameters.Create;
+    if (params.Options & FILE_DELETE_ON_CLOSE)
+    {
+        DbgPrint("Delete on close: %wZ\n", FltObjects->FileObject->FileName);
+        if (!isDeleteAllowed(Data))
+        {
+            Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+            return FLT_PREOP_COMPLETE;
         }
     }
 
-    // This template code does not do anything with the callbackData, but
-    // rather returns FLT_PREOP_SUCCESS_WITH_CALLBACK.
-    // This passes the request down to the next miniFilter in the chain.
-
-    return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+    return FLT_PREOP_SUCCESS_NO_CALLBACK;
 }
 
+
+
+FLT_PREOP_CALLBACK_STATUS
+SnowProcessPreSetInformation(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Flt_CompletionContext_Outptr_ PVOID* CompletionContext
+)
+{    
+    DbgPrint("we go to information\n");
+    UNREFERENCED_PARAMETER(CompletionContext);
+    UNREFERENCED_PARAMETER(FltObjects);
+
+    if (Data->RequestorMode == KernelMode)
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+
+    auto& params = Data->Iopb->Parameters.SetFileInformation;
+    if (params.FileInformationClass != FileDispositionInformation &&
+        params.FileInformationClass != FileDispositionInformationEx)
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+
+    auto info = (FILE_DISPOSITION_INFORMATION* )params.InfoBuffer;
+
+    if (!info->DeleteFile)
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+    if(isDeleteAllowed(Data))
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+
+    DbgPrint("and we gettt hereee!\n");
+    Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+    return FLT_PREOP_COMPLETE;
+}
 
 
 VOID

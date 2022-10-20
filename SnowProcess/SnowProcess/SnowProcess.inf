@@ -53,7 +53,7 @@ StartType        = 3                            ;SERVICE_DEMAND_START
 ErrorControl     = 1                            ;SERVICE_ERROR_NORMAL
 ; TODO - Change the Load Order Group value
 ; LoadOrderGroup = "FSFilter Activity Monitor"
-LoadOrderGroup = "_TODO_Change_LoadOrderGroup_appropriately_"
+LoadOrderGroup = "FS Undelete filters"
 AddReg           = MiniFilter.AddRegistry
 
 ;
@@ -86,7 +86,7 @@ SnowProcess.sys = 1,,
 
 [Strings]
 ; TODO - Add your manufacturer
-ManufacturerName        = "Template"
+ManufacturerName        = "SnowProcess"
 ServiceDescription      = "SnowProcess Mini-Filter Driver"
 ServiceName             = "SnowProcess"
 DriverName              = "SnowProcess"
@@ -96,5 +96,5 @@ DiskId1                 = "SnowProcess Device Installation Disk"
 DefaultInstance         = "SnowProcess Instance"
 Instance1.Name          = "SnowProcess Instance"
 ; TODO - Change the altitude value, see https://msdn.microsoft.com/en-us/windows/hardware/drivers/ifs/load-order-groups-and-altitudes-for-minifilter-drivers
-Instance1.Altitude       = "_TODO_Change_Altitude_appropriately_"
+Instance1.Altitude       = "345103"
 Instance1.Flags         = 0x0              ; Allow all attachments

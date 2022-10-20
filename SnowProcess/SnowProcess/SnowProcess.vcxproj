@@ -35,6 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="UnDeleteRoutines.cpp" />
     <ResourceCompile Include="SnowProcess.rc" />
     <ClCompile Include="DispathRoutines.cpp" />
     <ClCompile Include="FastMutex.cpp" />
