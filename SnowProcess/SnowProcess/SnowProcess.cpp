@@ -100,6 +100,13 @@ SnowProcessPreSetInformation(
     _Flt_CompletionContext_Outptr_ PVOID* CompletionContext
 );
 
+FLT_PREOP_CALLBACK_STATUS SnowProcessPreCreate
+(
+    _Inout_ PFLT_CALLBACK_DATA Data,
+    _In_ PCFLT_RELATED_OBJECTS FltObjects,
+    _Flt_CompletionContext_Outptr_ PVOID* CompletionContext
+);
+
 VOID
 SnowProcessOperationStatusCallback (
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
@@ -148,7 +155,7 @@ EXTERN_C_END
 //
 
 CONST FLT_OPERATION_REGISTRATION Callbacks[] = {
-    { IRP_MJ_CREATE, 0, SnowProcessPreOperation, nullptr},
+    { IRP_MJ_CREATE, 0, SnowProcessPreOperation, nullptr},    
     { IRP_MJ_SET_INFORMATION, 0, SnowProcessPreSetInformation, nullptr },
     { IRP_MJ_OPERATION_END }
 };
@@ -603,6 +610,17 @@ Return Value:
     if (params.Options & FILE_DELETE_ON_CLOSE)
     {
         DbgPrint("Delete on close: %wZ\n", FltObjects->FileObject->FileName);
+        if (!isDeleteAllowed(Data))
+        {
+            Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+            return FLT_PREOP_COMPLETE;
+        }
+    }
+    if (FlagOn(Data->Iopb->Parameters.Create.SecurityContext->DesiredAccess,
+        FILE_WRITE_DATA | FILE_APPEND_DATA |
+        DELETE | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA |
+        WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY)) 
+    {
         if (!isDeleteAllowed(Data))
         {
             Data->IoStatus.Status = STATUS_ACCESS_DENIED;
