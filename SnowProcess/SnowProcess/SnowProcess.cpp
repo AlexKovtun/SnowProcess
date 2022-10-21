@@ -369,11 +369,14 @@ bool isDeleteAllowed(_In_ PFLT_CALLBACK_DATA data)
 
         DbgPrint("%ws\n", fullPath.Buffer);
         UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\x64");
-        DbgPrint("%d\n", RtlPrefixUnicodeString(&path, &fullPath, false));
+        if(fullPath.Buffer != nullptr) //TODO:  we got here some bug fullPath is null or something
+        { 
+            DbgPrint("%d\n", RtlPrefixUnicodeString(&path, &fullPath, false));
 
-        if (RtlPrefixUnicodeString(&path, &fullPath, false))
-            allow = false;
+            if (RtlPrefixUnicodeString(&path, &fullPath, false))
+                allow = false;
 
+        }
     } while (false);
     if (nameInfo)
         FltReleaseFileNameInformation(nameInfo);
