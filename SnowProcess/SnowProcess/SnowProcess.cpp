@@ -32,12 +32,14 @@ ULONG_PTR OperationStatusCtx = 1;
 #define PTDBG_TRACE_OPERATION_STATUS    0x00000002
 
 ULONG gTraceFlags = 0;
-
+UNICODE_STRING currentNameExe = RTL_CONSTANT_STRING(L"\\Device\\HarddiskVolume2\\x64\\Release\\UserModeSnowProcess.exe");
 
 #define PT_DBG_PRINT( _dbgLevel, _string )          \
     (FlagOn(gTraceFlags,(_dbgLevel)) ?              \
         DbgPrint _string :                          \
         ((int)0))
+
+
 
 
 SnowProcesses WhiteProcesses;
@@ -47,6 +49,15 @@ SnowProcesses WhiteProcesses;
 *************************************************************************/
 
 EXTERN_C_START
+
+NTSTATUS ZwQueryInformationProcess(
+    _In_      HANDLE           ProcessHandle,
+    _In_      PROCESSINFOCLASS ProcessInformationClass,
+    _Out_     PVOID            ProcessInformation,
+    _In_      ULONG            ProcessInformationLength,
+    _Out_opt_ PULONG           ReturnLength
+);
+
 
 DRIVER_INITIALIZE DriverEntry;
 NTSTATUS
@@ -134,6 +145,7 @@ BOOLEAN
 SnowProcessDoRequestOperationStatus(
     _In_ PFLT_CALLBACK_DATA Data
     );
+
 
 EXTERN_C_END
 
@@ -343,12 +355,12 @@ Return Value:
 }
 
 
+
 /*************************************************************************
     MiniFilter initialization and unload routines.
 *************************************************************************/
 bool isDeleteAllowed(_In_ PFLT_CALLBACK_DATA data)
 {
-    DbgPrint("We Trying To delete :)\n");
     PFLT_FILE_NAME_INFORMATION nameInfo = nullptr;
     bool allow = true;
     NTSTATUS status;
@@ -366,14 +378,13 @@ bool isDeleteAllowed(_In_ PFLT_CALLBACK_DATA data)
         UNICODE_STRING fullPath;
         fullPath.Length = nameInfo->Volume.Length + nameInfo->ParentDir.Length;
         fullPath.Buffer = nameInfo->ParentDir.Buffer;
+        if(fullPath.Buffer != NULL)
+        {
+            UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\x64");
 
-        DbgPrint("%ws\n", fullPath.Buffer);
-        UNICODE_STRING path = RTL_CONSTANT_STRING(L"\\x64");
-        DbgPrint("%d\n", RtlPrefixUnicodeString(&path, &fullPath, false));
-
-        if (RtlPrefixUnicodeString(&path, &fullPath, false))
-            allow = false;
-
+            if (RtlPrefixUnicodeString(&path, &fullPath, false))
+                allow = false;
+        }
     } while (false);
     if (nameInfo)
         FltReleaseFileNameInformation(nameInfo);
@@ -570,6 +581,64 @@ Return Value:
     MiniFilter callback routines.
     MiniFilter callback routines.
 *************************************************************************/
+NTSTATUS IsUserProcess(PFLT_CALLBACK_DATA Data)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG retLength = 0;
+    ULONG pniSize = 512;
+    PUNICODE_STRING processName = nullptr;
+
+    auto process = PsGetThreadProcess(Data->Thread);
+
+    //get handle to the process
+    HANDLE hProcess;
+    status = ObOpenObjectByPointer(process, OBJ_KERNEL_HANDLE,
+        nullptr, 0, nullptr, KernelMode, &hProcess);
+    if (!NT_SUCCESS(status))
+        return STATUS_UNSUCCESSFUL;
+
+    //allocate memory to process name
+    processName = (PUNICODE_STRING)ExAllocatePool2(POOL_FLAG_PAGED, pniSize, DRIVER_TAG);
+    if (processName == NULL)
+        return STATUS_INSUFFICIENT_RESOURCES; // check what needed to return
+
+    status = ZwQueryInformationProcess(hProcess, ProcessImageFileName, processName, pniSize, &retLength);
+
+    if (!NT_SUCCESS(status))
+    {
+        DbgPrint("**0x%08X**\n", status);
+        ExFreePoolWithTag(processName, DRIVER_TAG);
+        if (hProcess)
+            ZwClose(hProcess);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    
+    if (processName)
+    {
+        DbgPrint("%ws\n%ws\n", processName->Buffer, currentNameExe.Buffer);
+        if (!RtlEqualUnicodeString(processName, &currentNameExe, FALSE)) //currentName exe stands for 
+        {
+            status = STATUS_UNSUCCESSFUL;
+            DbgPrint("blocked\n");
+        }
+        else
+        {
+            status = STATUS_SUCCESS;
+            DbgPrint("Sucess\n");
+        }
+            
+    }
+
+    if (hProcess)
+        ZwClose(hProcess);
+    
+    ExFreePoolWithTag(processName, DRIVER_TAG);
+
+    return status;
+}
+
+
 FLT_PREOP_CALLBACK_STATUS SnowProcessPreOperation
      (
     _Inout_ PFLT_CALLBACK_DATA Data,
@@ -602,14 +671,17 @@ Return Value:
 --*/
 {
     UNREFERENCED_PARAMETER(CompletionContext);
-    
+    NTSTATUS status;
     if (Data->RequestorMode == KernelMode)
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
     
+    // checks if UserMode(Our Program) trying to modify the process
+   
     auto& params = Data->Iopb->Parameters.Create;
     if (params.Options & FILE_DELETE_ON_CLOSE)
     {
         DbgPrint("Delete on close: %wZ\n", FltObjects->FileObject->FileName);
+        
         if (!isDeleteAllowed(Data))
         {
             Data->IoStatus.Status = STATUS_ACCESS_DENIED;
@@ -621,6 +693,11 @@ Return Value:
         DELETE | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA |
         WRITE_DAC | WRITE_OWNER | ACCESS_SYSTEM_SECURITY)) 
     {
+        status = IsUserProcess(Data);
+        //TODO: handle status if needed
+        if (NT_SUCCESS(status))
+            return FLT_PREOP_SUCCESS_NO_CALLBACK;
+
         if (!isDeleteAllowed(Data))
         {
             Data->IoStatus.Status = STATUS_ACCESS_DENIED;
@@ -640,9 +717,9 @@ SnowProcessPreSetInformation(
     _Flt_CompletionContext_Outptr_ PVOID* CompletionContext
 )
 {    
-    DbgPrint("we go to information\n");
     UNREFERENCED_PARAMETER(CompletionContext);
     UNREFERENCED_PARAMETER(FltObjects);
+    NTSTATUS status = STATUS_SUCCESS;
 
     if (Data->RequestorMode == KernelMode)
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
@@ -659,7 +736,10 @@ SnowProcessPreSetInformation(
     if(isDeleteAllowed(Data))
         return FLT_PREOP_SUCCESS_NO_CALLBACK;
 
-    DbgPrint("and we gettt hereee!\n");
+    status = IsUserProcess(Data);
+    if(NT_SUCCESS(status))
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+
     Data->IoStatus.Status = STATUS_ACCESS_DENIED;
     return FLT_PREOP_COMPLETE;
 }

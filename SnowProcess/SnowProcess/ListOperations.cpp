@@ -42,14 +42,14 @@ LIST_ENTRY *FindObject()
 {
     auto *iter = &WhiteProcesses.head_;
     auto data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
-    DbgPrint("%ws\n", data->data_.ImageFileName);
+    //DbgPrint("%ws\n", data->data_.ImageFileName);
     iter = iter->Blink;
     data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
-    DbgPrint("%ws\n", data->data_.ImageFileName);
+    //DbgPrint("%ws\n", data->data_.ImageFileName);
     while (&WhiteProcesses.head_ != &(*iter))
     {
         data = CONTAINING_RECORD(iter, Item<AllowedProcess>, data_);
-        DbgPrint("%ws\n", data->data_.ImageFileName);
+        //DbgPrint("%ws\n", data->data_.ImageFileName);
         iter = iter->Blink;
     }
     return nullptr;

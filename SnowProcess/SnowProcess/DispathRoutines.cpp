@@ -18,13 +18,11 @@ NTSTATUS SnowProcessCreateClose(PDEVICE_OBJECT, PIRP Irp)
 NTSTATUS SnowProcessDeviceControl(PDEVICE_OBJECT, PIRP Irp)
 {
 	auto stack = IoGetCurrentIrpStackLocation(Irp);
-
 	auto len = stack->Parameters.DeviceIoControl.InputBufferLength;
 	if (len == 0)
 		return CompleteIrp(Irp, STATUS_INVALID_BUFFER_SIZE);
 
 	auto code = stack->Parameters.DeviceIoControl.IoControlCode;
-	DbgPrint("code: %lu\n", code);
 
 	//TODO:split to functions
 	switch(code)
@@ -45,7 +43,6 @@ NTSTATUS SnowProcessDeviceControl(PDEVICE_OBJECT, PIRP Irp)
 			auto& item = newAllowedProcess->data_;
 			item.length_= data->length_;
 			::memcpy(item.ImageFileName, data->ImageFileName, MaxSizeImageName);
-			DbgPrint("%ws", item.ImageFileName);
 			AddAllowedProcess(&newAllowedProcess->Entry);
 		}break;
 

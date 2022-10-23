@@ -2,6 +2,7 @@
 #include <ntddk.h>
 #include "SnowProcessCommon.h"
 #include "FastMutex.h"
+
 #define DRIVER_TAG 'wons'
 
 void SnowProcessUnloadDriver(PDRIVER_OBJECT DriverObject);
@@ -20,14 +21,20 @@ struct SnowProcesses
 	FastMutex mutex_;
 };
 
-//global 
-extern SnowProcesses WhiteProcesses;
-
 template <typename T>
 struct Item
 {
 	LIST_ENTRY Entry;
 	T data_;
 };
+
+
+//globals
+extern SnowProcesses WhiteProcesses;
+
+
+
+
+
 
 
